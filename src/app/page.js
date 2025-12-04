@@ -1,9 +1,13 @@
 "use client";
 
-import Image from "next/image";
 import styles from "./page.module.css";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "react-toastify";
+import UserValidatorClass from "../../validators/users";
+import RegexClass from "../../utils/regex";
+
+const UserValidator = new UserValidatorClass();
+const Regex = new RegexClass();
 
 export default function Home() {
   const [loading, setLoading] = useState(false);
@@ -26,6 +30,68 @@ export default function Home() {
 
     // 2. la validation
     // TODO: à faire, reprendre le code de l'API
+    const data = {
+      userName: {
+        value: name,
+        validators: {
+          minLength: {
+            value: 3,
+            errorMessage: (value) => `Le nom d'utilisateur doit avoir au moins ${value} caractère${value > 1 ? "s" : ""}.`
+          },
+          maxLength: {
+            value: 30,
+            errorMessage: (value) => `Le nom d'utilisateur doit avoir moins de ${value} caractère${value > 1 ? "s" : ""}.`
+          }
+        }
+      },
+      email: {
+        value: email,
+        validators: {
+          minLength: {
+            value: 3,
+            errorMessage: (value) => `L'email doit avoir au moins ${value} caractère${value > 1 ? "s" : ""}.`
+          },
+          maxLength: {
+            value: 100,
+            errorMessage: (value) => `L'email doit avoir moins de ${value} caractère${value > 1 ? "s" : ""}.`
+          },
+          regex: {
+            value: Regex.emailRegex,
+            errorMessage: () => `L'email n'est pas conforme.`
+          },
+        }
+      },
+      password: {
+        value: password,
+        validators: {
+          minLength: {
+            value: 8,
+            errorMessage: (value) => `Le mot de passe doit avoir au moins ${value} caractère${value > 1 ? "s" : ""}.`
+          },
+          maxLength: {
+            value: 100,
+            errorMessage: (value) => `Le mot de passe doit avoir plus de ${value} caractère${value > 1 ? "s" : ""}.`
+          },
+          regex: {
+            value: Regex.passwordRegex,
+            errorMessage: () => `Le mot de passe n'est pas conforme.`
+          }
+        },
+      }
+    }
+
+    const errorMessage = UserValidator.createUserValidator(data);
+    if (errorMessage) {
+      toast.error(errorMessage);
+      setLoading(false);
+      return;
+    }
+
+    if (!confirmPassword || data.password.value !== confirmPassword) {
+      toast.error("Les mots de passe ne correspondent pas.");
+      setLoading(false);
+      return;
+    }
 
     try {
       // 3. appeler l'API
